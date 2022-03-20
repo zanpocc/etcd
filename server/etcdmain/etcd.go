@@ -51,7 +51,10 @@ var (
 func startEtcdOrProxyV2(args []string) {
 	grpc.EnableTracing = false
 
+	// 读取配置
 	cfg := newConfig()
+
+	// "default=http://localhost:2380"
 	defaultInitialCluster := cfg.ec.InitialCluster
 
 	err := cfg.parse(args[1:])
@@ -59,6 +62,9 @@ func startEtcdOrProxyV2(args []string) {
 	// If we failed to parse the whole configuration, print the error using
 	// preferably the resolved logger from the config,
 	// but if does not exists, create a new temporary logger.
+	// 如果我们未能解析整个配置，则使用打印错误
+	// 最好是从配置中解析的记录器，
+	// 但如果不存在，则创建一个新的临时记录器。
 	if lg == nil {
 		var zapError error
 		// use this logger
@@ -87,6 +93,7 @@ func startEtcdOrProxyV2(args []string) {
 		}
 	}()
 
+	// 更新默认集群
 	defaultHost, dhErr := (&cfg.ec).UpdateDefaultClusterFromName(defaultInitialCluster)
 	if defaultHost != "" {
 		lg.Info(
@@ -105,7 +112,11 @@ func startEtcdOrProxyV2(args []string) {
 			zap.String("data-dir", cfg.ec.Dir),
 		)
 	}
+	if cfg.ec.Name == embed.DefaultName {
+		lg.Warn("The name is not specified or the name is 'default', which may cause failure to add a cluster member.")
+	}
 
+	// 定义两个chan
 	var stopped <-chan struct{}
 	var errc <-chan error
 
@@ -118,6 +129,7 @@ func startEtcdOrProxyV2(args []string) {
 		)
 		switch which {
 		case dirMember:
+			// 启动etcd
 			stopped, errc, err = startEtcd(&cfg.ec)
 		case dirProxy:
 			err = startProxy(cfg)
@@ -209,6 +221,12 @@ func startEtcdOrProxyV2(args []string) {
 	// for accepting connections. The etcd instance should be
 	// joined with the cluster and ready to serve incoming
 	// connections.
+
+	// 至此，etcd的初始化就完成了。
+	// 侦听器正在侦听 TCP 端口并准备就绪
+	// 用于接受连接。 etcd 实例应该是
+	// 加入集群并准备服务传入
+	// 连接。
 	notifySystemd(lg)
 
 	select {
@@ -223,6 +241,7 @@ func startEtcdOrProxyV2(args []string) {
 
 // startEtcd runs StartEtcd in addition to hooks needed for standalone etcd.
 func startEtcd(cfg *embed.Config) (<-chan struct{}, <-chan error, error) {
+	// 启动etcd
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		return nil, nil, err

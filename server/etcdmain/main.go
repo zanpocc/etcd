@@ -23,8 +23,10 @@ import (
 )
 
 func Main(args []string) {
+	// CPU架构检查
 	checkSupportArch()
 
+	// 以grpc-proxy代理方式运行
 	if len(args) > 1 {
 		cmd := args[1]
 		switch cmd {
@@ -37,6 +39,7 @@ func Main(args []string) {
 		}
 	}
 
+	// 默认运行
 	startEtcdOrProxyV2(args)
 }
 

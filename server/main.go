@@ -23,11 +23,13 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"go.etcd.io/etcd/server/v3/etcdmain"
 )
 
 func main() {
+	fmt.Println(os.Getpid())
 	etcdmain.Main(os.Args)
 }

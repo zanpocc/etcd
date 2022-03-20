@@ -810,9 +810,7 @@ func (cfg Config) InitialClusterFromName(name string) (ret string) {
 		return ""
 	}
 	n := name
-	if name == "" {
-		n = DefaultName
-	}
+
 	for i := range cfg.APUrls {
 		ret = ret + "," + n + "=" + cfg.APUrls[i].String()
 	}

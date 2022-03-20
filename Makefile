@@ -10,23 +10,33 @@
 #   make docker-kill
 #   make docker-remove
 
+
+# 前置变量定义（执行系统命令得到架构、环境变量等相关信息）
+
+# 获得系统内核相关信息
 UNAME := $(shell uname)
+# ？maybe command arguments
 XARGS = xargs
+# 架构
 ARCH ?= $(shell go env GOARCH)
 
 # -r is only necessary on GNU xargs.
+# 如果是Linux系统的话，加上-r命令
 ifeq ($(UNAME), Linux)
 XARGS += -r
 endif
 XARGS += rm -r
 
+# 构建
 .PHONY: build
 build:
+    # 执行构建脚本，完了编译后的软件，打印版本信息
 	GO_BUILD_FLAGS="-v" ./scripts/build.sh
 	./bin/etcd --version
 	./bin/etcdctl version
 	./bin/etcdutl version
 
+# 清理
 clean:
 	rm -f ./codecov
 	rm -rf ./covdir

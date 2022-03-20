@@ -2,6 +2,8 @@
 
 source ./scripts/test_lib.sh
 
+# 检测GIT是否存在
+# 获取当前代码库最新HEAD提交的短sha码
 GIT_SHA=$(git rev-parse --short HEAD || echo "GitNotFound")
 if [[ -n "$FAILPOINTS" ]]; then
   GIT_SHA="$GIT_SHA"-FAILPOINTS
@@ -38,6 +40,7 @@ etcd_build() {
 
   run rm -f "${out}/etcd"
   (
+    # server路径
     cd ./server
     # Static compilation is useful when etcd is run in a container. $GO_BUILD_FLAGS is OK
     # shellcheck disable=SC2086

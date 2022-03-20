@@ -295,6 +295,8 @@ type EtcdServer struct {
 
 // NewServer creates a new EtcdServer from the supplied configuration. The
 // configuration is considered static for the lifetime of the EtcdServer.
+// NewServer 根据提供的配置创建一个新的 EtcdServer。 这
+// 在 EtcdServer 的生命周期内，配置被认为是静态的。
 func NewServer(cfg config.ServerConfig) (srv *EtcdServer, err error) {
 	b, err := bootstrap(cfg)
 	if err != nil {
@@ -2312,6 +2314,7 @@ func (s *EtcdServer) restoreAlarms() error {
 // GoAttach creates a goroutine on a given function and tracks it using
 // the etcdserver waitgroup.
 // The passed function should interrupt on s.StoppingNotify().
+
 func (s *EtcdServer) GoAttach(f func()) {
 	s.wgMu.RLock() // this blocks with ongoing close(s.stopping)
 	defer s.wgMu.RUnlock()

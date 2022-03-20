@@ -65,8 +65,8 @@ const (
 
 // Etcd contains a running etcd server and its listeners.
 type Etcd struct {
-	Peers   []*peerListener
-	Clients []net.Listener
+	Peers   []*peerListener // 集群节点
+	Clients []net.Listener  // 客户端
 	// a map of contexts for the servers that serves client requests.
 	sctxs            map[string]*serveCtx
 	metricsListeners []net.Listener
@@ -91,13 +91,20 @@ type peerListener struct {
 // StartEtcd launches the etcd server and HTTP handlers for client/server communication.
 // The returned Etcd.Server is not guaranteed to have joined the cluster. Wait
 // on the Etcd.Server.ReadyNotify() channel to know when it completes and is ready for use.
+
+// StartEtcd 启动 etcd 服务器和 HTTP 处理程序以进行客户端/服务器通信。
+// 返回的 Etcd.Server 不保证已经加入集群。 等待
+// 在 Etcd.Server.ReadyNotify() 通道上知道它何时完成并准备好使用。
 func StartEtcd(inCfg *Config) (e *Etcd, err error) {
+
+	// 配置校验
 	if err = inCfg.Validate(); err != nil {
 		return nil, err
 	}
 	serving := false
 	e = &Etcd{cfg: *inCfg, stopc: make(chan struct{})}
 	cfg := &e.cfg
+	// 如果启动失败，则关闭服务器
 	defer func() {
 		if e == nil || err == nil {
 			return
@@ -123,6 +130,8 @@ func StartEtcd(inCfg *Config) (e *Etcd, err error) {
 		"configuring peer listeners",
 		zap.Strings("listen-peer-urls", e.cfg.getLPURLs()),
 	)
+
+	// 2380，提供peer服务，与其它节点通讯
 	if e.Peers, err = configurePeerListeners(cfg); err != nil {
 		return e, err
 	}
@@ -131,6 +140,8 @@ func StartEtcd(inCfg *Config) (e *Etcd, err error) {
 		"configuring client listeners",
 		zap.Strings("listen-client-urls", e.cfg.getLCURLs()),
 	)
+
+	// 2379，提供http服务
 	if e.sctxs, err = configureClientListeners(cfg); err != nil {
 		return e, err
 	}
@@ -513,6 +524,7 @@ func configurePeerListeners(cfg *Config) (peers []*peerListener, err error) {
 			}
 		}
 		peers[i] = &peerListener{close: func(context.Context) error { return nil }}
+		// 2380
 		peers[i].Listener, err = transport.NewListenerWithOpts(u.Host, u.Scheme,
 			transport.WithTLSInfo(&cfg.PeerTLSInfo),
 			transport.WithSocketOpts(&cfg.SocketOpts),
@@ -530,6 +542,7 @@ func configurePeerListeners(cfg *Config) (peers []*peerListener, err error) {
 }
 
 // configure peer handlers after rafthttp.Transport started
+// 在 rafthttp.Transport 启动后配置对等处理程序
 func (e *Etcd) servePeers() (err error) {
 	ph := etcdhttp.NewPeerHandler(e.GetLogger(), e.Server)
 	var peerTLScfg *tls.Config
